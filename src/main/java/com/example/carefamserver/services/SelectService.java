@@ -2,16 +2,19 @@ package com.example.carefamserver.services;
 
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.sql.*;
 
 @Service
 public class SelectService {
-    private static final String DB_URL = "jdbc:mariadb://localhost:33063";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "1234";
+    private final DataSource dataSource;
 
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+    public SelectService(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
     }
 
     public void selectAll() {

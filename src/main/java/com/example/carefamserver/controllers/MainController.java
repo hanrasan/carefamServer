@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @RestController
 public class MainController {
@@ -26,7 +27,7 @@ public class MainController {
     private SelectService selectService;
 
     @GetMapping("/insert")
-    public String insert() throws IOException {
+    public String insert() throws IOException, SQLException {
         createService.dropSchema();
         createService.createSchema();
         createService.createTable();

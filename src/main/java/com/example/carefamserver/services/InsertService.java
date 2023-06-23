@@ -1,12 +1,11 @@
 package com.example.carefamserver.services;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,28 +13,19 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 @Service
 public class InsertService {
 
-    private static final String DB_URL = "jdbc:mariadb://localhost:33063";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "1234";
+    private final DataSource dataSource;
 
-    private Connection getConnection() throws SQLException {
-        HikariDataSource dataSource = null;
-        if (dataSource == null) {
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(DB_URL);
-            config.setUsername(DB_USER);
-            config.setPassword(DB_PASSWORD);
+    public InsertService(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
-            dataSource = new HikariDataSource(config);
-        }
-
+    public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
 
@@ -43,22 +33,22 @@ public class InsertService {
     protected void insertDB2(JSONArray array, int iter, Connection connection) {
         JSONArray jsonArray = array.getJSONArray(iter);
         String sql = "INSERT INTO `carefam`.`mainData` (`name`, `category1`, `category2`, `category3`, `city`," +
-                        "`siGunGu`, `eupMyeonDong`, `li`, `bungi`, `roadName`," +
-                        "`buildingNumber`, `latitude`, `longitude`, `postalCode`, `roadAddress`," +
-                        "`jibunAddress`, `phoneNumber`, `website`, `closedDays`, `operatingHours`," +
-                        "`parkingAvailability`, `admissionFeeInfo`, `petAccommodationInfo`, `petExclusiveInfo`, `permissibleAnimalSize`," +
-                        "`petRestrictionInfo`, `indoorFacilityAvailability`, `outdoorFacilityAvailability`, `basicInfoDescription`, `additionalDogFee`," +
-                        "`lastUpdatedDate`)" +
-                        "VALUES (?,?,?,?,?," +
-                        "?,?,?,?,?," +
-                        "?,?,?,?,?," +
-                        "?,?,?,?,?," +
-                        "?,?,?,?,?," +
-                        "?,?,?,?,?," +
-                        "?)";
+                "`siGunGu`, `eupMyeonDong`, `li`, `bungi`, `roadName`," +
+                "`buildingNumber`, `latitude`, `longitude`, `postalCode`, `roadAddress`," +
+                "`jibunAddress`, `phoneNumber`, `website`, `closedDays`, `operatingHours`," +
+                "`parkingAvailability`, `admissionFeeInfo`, `petAccommodationInfo`, `petExclusiveInfo`, `permissibleAnimalSize`," +
+                "`petRestrictionInfo`, `indoorFacilityAvailability`, `outdoorFacilityAvailability`, `basicInfoDescription`, `additionalDogFee`," +
+                "`lastUpdatedDate`)" +
+                "VALUES (?,?,?,?,?," +
+                "?,?,?,?,?," +
+                "?,?,?,?,?," +
+                "?,?,?,?,?," +
+                "?,?,?,?,?," +
+                "?,?,?,?,?," +
+                "?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            int batchSize = 100; // 배치 크기 설정
+            int batchSize = 7000; // 배치 크기 설정
             int count = 0;
 
             for (int k = 0; k < jsonArray.length(); k++) {
@@ -144,17 +134,18 @@ public class InsertService {
                     // 배치에 SQL 문 추가
                     statement.addBatch();
 
-                    // 배치 크기에 도달하면 실행
-                    if (++count % batchSize == 0) {
-                        statement.executeBatch();
-                    }
+//                    // 배치 크기에 도달하면 실행
+//                    if (++count % batchSize == 0) {
+//                        statement.executeBatch();
+//                    }
 
                     j++;
                 }
-            }
 
-            // 남은 SQL 문 실행
-            statement.executeBatch();
+                // 남은 SQL 문 실행
+                statement.executeBatch();
+                statement.clearBatch();
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -593,77 +584,139 @@ public class InsertService {
     @Async
     public void saveDataToDB() throws IOException {
         JSONArray array = new JSONArray();
-        for (int i = 0; i < 6; i++) {
+        for (int i = 1; i < 7; i++) {
             array.put(makeDataJsonArray(i));
         }
 
         Connection connection = null;
         try {
             connection = getConnection();
+            for (int i = 0; i < 6; i++) {
+                insertDB2(array, i, connection);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 처리할 예외
+                }
+            }
         }
 
-        for (int i = 0; i < 6; i++) {
-            insertDB2(array, i, connection);
-        }
     }
 
     @Async
     public void saveDataToDB2() throws IOException {
         JSONArray array = new JSONArray();
-        for (int i = 6; i < 12; i++) {
+        for (int i = 7; i < 13; i++) {
             array.put(makeDataJsonArray(i));
         }
 
         Connection connection = null;
         try {
             connection = getConnection();
+            for (int i = 0; i < 6; i++) {
+                insertDB2(array, i, connection);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 처리할 예외
+                }
+            }
         }
 
-        for (int i = 0; i < 6; i++) {
-            insertDB2(array, i, connection);
-        }
+//        Connection connection = null;
+//        try {
+//            connection = getConnection();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        for (int i = 0; i < 6; i++) {
+//            insertDB2(array, i, connection);
+//        }
     }
 
     @Async
     public void saveDataToDB3() throws IOException {
         JSONArray array = new JSONArray();
-        for (int i = 12; i < 18; i++) {
+        for (int i = 13; i < 19; i++) {
             array.put(makeDataJsonArray(i));
         }
 
         Connection connection = null;
         try {
             connection = getConnection();
+            for (int i = 0; i < 6; i++) {
+                insertDB2(array, i, connection);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 처리할 예외
+                }
+            }
         }
 
-        for (int i = 0; i < 6; i++) {
-            insertDB2(array, i, connection);
-        }
+//        Connection connection = null;
+//        try {
+//            connection = getConnection();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        for (int i = 0; i < 6; i++) {
+//            insertDB2(array, i, connection);
+//        }
     }
 
     @Async
     public void saveDataToDB4() throws IOException {
         JSONArray array = new JSONArray();
-        for (int i = 18; i < 25; i++) {
+        for (int i = 19; i < 25; i++) {
             array.put(makeDataJsonArray(i));
         }
 
         Connection connection = null;
         try {
             connection = getConnection();
+            for (int i = 0; i < 6; i++) {
+                insertDB2(array, i, connection);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 처리할 예외
+                }
+            }
         }
 
-        for (int i = 0; i < 7; i++) {
-            insertDB2(array, i, connection);
-        }
+//        Connection connection = null;
+//        try {
+//            connection = getConnection();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        for (int i = 0; i < 7; i++) {
+//            insertDB2(array, i, connection);
+//        }
     }
 
     @Async
@@ -676,13 +729,31 @@ public class InsertService {
         Connection connection = null;
         try {
             connection = getConnection();
+            for (int i = 0; i < 25; i++) {
+                insertDB2(array, i, connection);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 처리할 예외
+                }
+            }
         }
 
-        for (int i = 0; i < 25; i++) {
-            insertDB(array, i, connection);
-        }
+//        Connection connection = null;
+//        try {
+//            connection = getConnection();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        for (int i = 0; i < 25; i++) {
+//            insertDB(array, i, connection);
+//        }
     }
 
     public String makeApiLine(int page) throws IOException {

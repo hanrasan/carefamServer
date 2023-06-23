@@ -1,18 +1,40 @@
 package com.example.carefamserver.services;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.sql.*;
 
 @Service
 public class CreateService {
-    private static final String DB_URL = "jdbc:mariadb://localhost:33063";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "1234";
 
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+    private final DataSource dataSource;
+
+    public CreateService(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
+
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+
+
+//    public Connection getConnection() throws SQLException {
+//        HikariDataSource dataSource = null;
+//        if (dataSource == null) {
+//            HikariConfig config = new HikariConfig();
+//            config.setJdbcUrl(DB_URL);
+//            config.setUsername(DB_USER);
+//            config.setPassword(DB_PASSWORD);
+//
+//            dataSource = new HikariDataSource(config);
+//        }
+//
+//        return dataSource.getConnection();
+//    }
 
     public void createSchema() {
         String sql = "CREATE SCHEMA IF NOT EXISTS `carefam`";
