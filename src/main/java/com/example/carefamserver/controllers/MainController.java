@@ -56,6 +56,6 @@ public class MainController {
 
     @GetMapping("selectAll")
     public String select() {
-        return "aa";
+        return "Mybatis개어렵다!!";
     }
 }
